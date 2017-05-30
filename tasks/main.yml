@@ -50,7 +50,3 @@
 
 - name: install nomad-exporter
   include: install-nomad-exporter.yml
-
-- name: configure ACL
-  include: configure-acl.yml
-  when: prometheus_nomad_acl|bool

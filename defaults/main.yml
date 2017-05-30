@@ -16,9 +16,6 @@ prometheus_group:  prometheus
 prometheus_nomad_exporter_version: git
 prometheus_nomad_exporter_platform: linux
 prometheus_nomad_exporter_arch: '{{ "amd64" if ansible_userspace_bits == "64" else "386" }}'
-# Nomad protects its socket and log from users other than root, but it can be fixed with ACL. Disable this option if you have problems with ACL and want to configure access manually
-prometheus_gluster_acl: '{{ prometheus_user != "root" }}'
-
 
 gosu_version: '1.10'
 prometheus_go_version:   1.6.2

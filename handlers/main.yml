@@ -1,0 +1,12 @@
+---
+# file: handlers/main.yml
+#
+
+- name: restart nomad_exporter
+  service: name=nomad_exporter state=restarted
+
+- name: reload nomad_exporter
+  service: name=nomad_exporter state=reloaded
+
+- name: stop nomad_exporter
+  service: name=nomad_exporter state=stopped

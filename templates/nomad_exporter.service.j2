@@ -1,0 +1,21 @@
+[Unit]
+Description=nomad_exporter - Prometheus exporter for Nomad metrics.
+Documentation=https://github.com/Clarivate-LSPS/ansible-nomad-exporter
+After=network.target
+
+[Service]
+Type=simple
+
+#ExecStartPre=/bin/sh -c  " mkdir -p '{{ prometheus_pid_path }}' '{{ prometheus_log_path }}' "
+#ExecStartPre=/bin/sh -c  " chown -R {{ prometheus_user }} '{{ prometheus_pid_path }}' '{{ prometheus_log_path }}' "
+#PIDFile={{ prometheus_pid_path }}/nomad_exporter.pid
+
+
+User={{ prometheus_user }}
+Group={{ prometheus_group }}
+
+{% if prometheus_nomad_exporter_opts is defined %}
+ExecStart={{ prometheus_install_path }}/nomad_exporter  {{ prometheus_nomad_exporter_opts }}
+{% else %}
+ExecStart={{ prometheus_install_path }}/nomad_exporter
+{% endif %}

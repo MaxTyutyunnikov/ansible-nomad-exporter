@@ -1,0 +1,82 @@
+---
+# file: tasks/install-nomad-exporter.yml
+#
+# Install Prometheus nomad-exporter.
+#
+# @see http://prometheus.io/docs/introduction/getting_started/
+#
+
+- block:
+    - name: set internal variables for convenience (part 1)
+      set_fact:
+        prometheus_nomad_exporter_archive_name: "nomad_exporter-{{ prometheus_nomad_exporter_version }}.{{ prometheus_nomad_exporter_platform }}-{{ prometheus_nomad_exporter_arch }}"
+        
+    - name: set internal variables for convenience (part 2)
+      set_fact:
+        prometheus_nomad_exporter_tarball_url: "https://github.com/Nomon/nomad_exporter/releases/download/v{{ prometheus_nomad_exporter_version }}/{{ prometheus_nomad_exporter_archive_name }}.tar.gz"
+
+    - name: download and untar nomad_exporter tarball
+      unarchive:
+        src: "{{ prometheus_nomad_exporter_tarball_url }}"
+        dest: "{{ prometheus_install_path }}"
+        copy: no
+
+    - name: move to correct install path
+      command: "mv {{ prometheus_install_path }}/{{ prometheus_nomad_exporter_archive_name }}/nomad_exporter {{ prometheus_install_path }}/nomad_exporter"
+  when: prometheus_nomad_exporter_version != "git"
+
+- block:
+    - name: set internal variables for convenience
+      set_fact:
+        prometheus_nomad_exporter_git_url: "https://github.com/Nomon/nomad-exporter.git"
+        prometheus_nomad_exporter_src_path: "{{ prometheus_gopath }}/src/github.com/Nomon/nomad-exporter"
+
+    - name: delete the nomad_exporter directory if it already exists
+      file: path="{{ prometheus_nomad_exporter_src_path }}" state=absent
+      when: prometheus_rebuild
+
+    - name: clone the nomad_exporter project src
+      git:
+        repo: "{{ prometheus_nomad_exporter_git_url }}"
+        dest: "{{ prometheus_nomad_exporter_src_path }}"
+        depth: 1
+        force: yes
+
+    - name: build nomad_exporter
+      command: go build
+      args:
+        chdir: "{{ prometheus_nomad_exporter_src_path }}"
+        creates: nomad-exporter
+      environment:
+        GO15VENDOREXPERIMENT: 1
+        GOROOT: "{{ prometheus_goroot }}"
+        GOPATH: "{{ prometheus_gopath }}"
+        PATH: "{{ ansible_env.PATH }}:{{ prometheus_goroot }}/bin:{{ prometheus_gopath }}/bin"
+
+    - name: copy the built nomad_exporter to the install path
+      command: "cp {{ prometheus_nomad_exporter_src_path }}/nomad-exporter {{ prometheus_install_path }}/nomad_exporter"
+
+  when: prometheus_nomad_exporter_version == "git"
+
+
+
+- name: set permissions, owner and group
+  file: path={{ prometheus_install_path }}/nomad_exporter owner={{ prometheus_user }} group={{ prometheus_group }} mode="go-w"
+
+- name: set nomad_exporter variables
+  copy: src="../files/etc-default-nomad_exporter"  dest=/etc/default/nomad_exporter
+
+
+- debug: var=prometheus_nomad_exporter_use_systemd
+
+- name: copy INIT script to server
+  template: src="../templates/nomad_exporter.sysvinit.{{ ansible_os_family|lower }}.sh.j2"  dest="/etc/init.d/nomad_exporter"  mode="a+x"
+  when: not prometheus_nomad_exporter_use_systemd|bool
+
+- name: copy systemd config to server
+  template: src="../templates/nomad_exporter.service.j2"  dest="/lib/systemd/system/nomad_exporter.service"
+  when: prometheus_nomad_exporter_use_systemd
+
+
+- name: set INIT status
+  service: name=nomad_exporter enabled=yes state=restarted

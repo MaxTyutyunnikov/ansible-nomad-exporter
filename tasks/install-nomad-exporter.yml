@@ -6,14 +6,23 @@
 # @see http://prometheus.io/docs/introduction/getting_started/
 #
 
+- name: Check if nomad_exporter service exists
+  stat: 
+    path: '{{ "/lib/systemd/system/nomad_exporter.service" if prometheus_nomad_exporter_use_systemd else "/etc/init.d/nomad_exporter" }}'
+  register: prometheus_nomad_exporter_service_status
+
+- name: Stop nomad_service before update
+  service: name=nomad_exporter state=stopped
+  when: prometheus_nomad_exporter_service_status.stat.exists
+
 - block:
     - name: set internal variables for convenience (part 1)
       set_fact:
-        prometheus_nomad_exporter_archive_name: "nomad_exporter-{{ prometheus_nomad_exporter_version }}.{{ prometheus_nomad_exporter_platform }}-{{ prometheus_nomad_exporter_arch }}"
+        prometheus_nomad_exporter_archive_name: "nomad-exporter-{{ prometheus_nomad_exporter_version }}.{{ prometheus_nomad_exporter_platform }}-{{ prometheus_nomad_exporter_arch }}"
         
     - name: set internal variables for convenience (part 2)
       set_fact:
-        prometheus_nomad_exporter_tarball_url: "https://github.com/Nomon/nomad_exporter/releases/download/v{{ prometheus_nomad_exporter_version }}/{{ prometheus_nomad_exporter_archive_name }}.tar.gz"
+        prometheus_nomad_exporter_tarball_url: "https://github.com/Nomon/nomad-exporter/releases/download/v{{ prometheus_nomad_exporter_version }}/{{ prometheus_nomad_exporter_archive_name }}.tar.gz"
 
     - name: download and untar nomad_exporter tarball
       unarchive:
@@ -22,7 +31,7 @@
         copy: no
 
     - name: move to correct install path
-      command: "mv {{ prometheus_install_path }}/{{ prometheus_nomad_exporter_archive_name }}/nomad_exporter {{ prometheus_install_path }}/nomad_exporter"
+      command: "mv {{ prometheus_install_path }}/{{ prometheus_nomad_exporter_archive_name }}/nomad-exporter {{ prometheus_install_path }}/nomad_exporter"
   when: prometheus_nomad_exporter_version != "git"
 
 - block:
@@ -55,10 +64,7 @@
 
     - name: copy the built nomad_exporter to the install path
       command: "cp {{ prometheus_nomad_exporter_src_path }}/nomad-exporter {{ prometheus_install_path }}/nomad_exporter"
-
   when: prometheus_nomad_exporter_version == "git"
-
-
 
 - name: set permissions, owner and group
   file: path={{ prometheus_install_path }}/nomad_exporter owner={{ prometheus_user }} group={{ prometheus_group }} mode="go-w"

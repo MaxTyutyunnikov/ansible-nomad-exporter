@@ -22,7 +22,7 @@
         
     - name: set internal variables for convenience (part 2)
       set_fact:
-        prometheus_nomad_exporter_tarball_url: "https://github.com/Nomon/nomad-exporter/releases/download/v{{ prometheus_nomad_exporter_version }}/{{ prometheus_nomad_exporter_archive_name }}.tar.gz"
+        prometheus_nomad_exporter_tarball_url: "https://github.com/{{ prometheus_nomad_exporter_git_author }}/nomad-exporter/releases/download/v{{ prometheus_nomad_exporter_version }}/{{ prometheus_nomad_exporter_archive_name }}.tar.gz"
 
     - name: download and untar nomad_exporter tarball
       unarchive:
@@ -37,8 +37,8 @@
 - block:
     - name: set internal variables for convenience
       set_fact:
-        prometheus_nomad_exporter_git_url: "https://github.com/Nomon/nomad-exporter.git"
-        prometheus_nomad_exporter_src_path: "{{ prometheus_gopath }}/src/github.com/Nomon/nomad-exporter"
+        prometheus_nomad_exporter_git_url: "https://github.com/{{ prometheus_nomad_exporter_git_author }}/nomad-exporter.git"
+        prometheus_nomad_exporter_src_path: "{{ prometheus_gopath }}/src/github.com/{{ prometheus_nomad_exporter_git_author }}/nomad-exporter"
 
     - name: delete the nomad_exporter directory if it already exists
       file: path="{{ prometheus_nomad_exporter_src_path }}" state=absent

@@ -14,6 +14,7 @@ prometheus_user:   prometheus
 prometheus_group:  prometheus
 
 prometheus_nomad_exporter_version: git
+prometheus_nomad_exporter_git_author: mirasrael
 prometheus_nomad_exporter_platform: linux
 prometheus_nomad_exporter_arch: '{{ "amd64" if ansible_userspace_bits == "64" else "386" }}'
 

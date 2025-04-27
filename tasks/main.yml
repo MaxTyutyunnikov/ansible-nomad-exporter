@@ -7,17 +7,15 @@
 #
 
 - name: set role variables, if necessary
-  include: set-role-variables.yml
+  include_tasks: set-role-variables.yml
 
 - name: install libselinux-python binary for Ansible to work
   yum: name=libselinux-python state=present
   when: ansible_pkg_mgr == "yum"
 
 - name: install dependencies for compiling Prometheus source code
-  include: install-compile-tools.yml
+  include_tasks: install-compile-tools.yml
   when: prometheus_nomad_exporter_version == "git"
-
-
 
 - name: create Prometheus group
   group: name={{ prometheus_group }}  state=present
@@ -43,10 +41,9 @@
     - "{{ prometheus_log_path }}"
     - "{{ prometheus_pid_path }}"
 
-
 - name: install helper utility "gosu"
-  include: install-gosu.yml
+  include_tasks: install-gosu.yml
   when: not prometheus_nomad_exporter_use_systemd|bool
 
 - name: install nomad-exporter
-  include: install-nomad-exporter.yml
+  include_tasks: install-nomad-exporter.yml
